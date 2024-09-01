@@ -1,0 +1,492 @@
+---
+title: "126-final-project"
+author: "Chengwei Zhang, Ji Qi and Lin Fang"
+output:
+  pdf_document:
+    latex_engine: xelatex
+date: "2024-06-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1: Data Description and Descriptive Statistics
+
+## 1.1 Indroduction
+
+In the diamond market, the price of a diamond is influenced by various factors such as carat, cut, color, clarity, and other physical dimensions. Understanding these relationships can help in predicting diamond prices and making informed purchasing or selling decisions. In this report, we analyze diamond pricing data using linear regression to understand how different attributes of a diamond affect its price.
+
+The primary purpose of this report is to explore the relationships between the listed price of a diamond and its various attributes, including carat, cut, color, clarity, depth, and dimensions. By analyzing these relationships, we aim to provide insights into the key factors that determine diamond pricing and develop a predictive model.
+
+This report is structured into four sections. Section 2 covers exploratory data analysis (EDA), providing a general understanding of the dataset and forming expectations about our models. In Section 3, we select and fit the most reasonable model through variable selection and regression techniques. Section 4 interprets our model in the context of real-world scenarios and draws conclusions based on the findings.
+
+## 1.2 Describe All Variables
+
+In this dataset, there are ten variables: nine independent variables and one response variable. Below is a detailed description of these variables:
+
+-   **Carat (0.2 - 5.01):** The carat is the diamond's physical weight measured in metric carats. One carat equals 0.20 grams and is subdivided into 100 points. The weight of the diamond is a critical factor influencing its price.
+
+-   **Cut (Fair, Good, Very Good, Premium, Ideal):** The quality of the diamond's cut. The cut grade ranges from Fair to Ideal, with Ideal being the highest quality. The precision of the cut affects the diamond's brilliance and overall appearance, thus impacting its price.
+
+-   **Color (J (worst) to D (best)):** The color grade of the diamond, ranging from J (worst) to D (best). Colorless diamonds (D) are the most valuable, while diamonds with a yellowish tint (J) are less valuable. The color grading significantly influences the diamond's price.
+
+-   **Clarity (I1 (worst), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (best)):** This measures the presence of internal characteristics (inclusions) or external characteristics (blemishes) within the diamond. Clarity grades range from I1 (included) to IF (internally flawless), with higher clarity grades being more valuable. Clarity affects the diamond's appearance and value.
+
+-   **Depth (43 - 79):** The total depth percentage of the diamond, calculated as 2 \* z / (x + y). Depth measures the height of the diamond from the culet (bottom tip) to the table (top flat surface). The depth percentage affects the diamond's brilliance and is a factor in pricing.
+
+-   **Table (43 - 95):** The width of the top of the diamond relative to its widest point. A larger table size can enhance the diamond's ability to reflect light, affecting its visual appeal and price.
+
+-   **Price (\$326 - \$18,826):** The listed price of the diamond in US dollars. This is the target variable for our analysis, representing the value we aim to predict based on other attributes.
+
+-   **X (0 - 10.74):** Length of the diamond in millimeters. The dimensions of the diamond (length, width, and depth) contribute to its overall size and weight.
+
+-   **Y (0 - 58.9):** Width of the diamond in millimeters. The width, along with the length and depth, defines the diamond's size, which is correlated with its carat weight and price.
+
+-   **Z (0 - 31.8):** Depth of the diamond in millimeters. The depth dimension, together with length and width, affects the diamond's proportions and overall appearance.
+
+The dataset contains nearly 54,000 observations with no missing data, providing a comprehensive overview of the diamond market. Through EDA, we aim to summarize the key characteristics of the data, visualize the distributions and relationships among variables, and identify any interesting patterns or anomalies. This analysis will set the stage for building and evaluating predictive models in the subsequent sections.
+
+## 1.3 Random Sampling
+
+To begin our analysis, we selected a random sample of 500 diamonds from the original dataset. Random sampling is crucial to ensure that our sample is representative of the overall population and to avoid any bias that might arise from non-random selection.
+
+The steps involved in selecting the random sample were as follows:
+
+```{r, echo = FALSE}
+#read the diamond data
+library(readxl)
+diamond <- read.csv("Diamonds Prices2022.csv")
+diamond <- diamond[,-1]
+head(diamond)
+```
+
+To understand the sample data, we performed exploratory data analysis (EDA) using the skimr package, which provides a concise summary of the dataset. The summary statistics for the sample data were as follows:
+
+```         
+•   Number of rows: 500
+•   Number of columns: 10
+•   Column types: 3 factor variables and 8 numeric variables
+```
+
+## 1.4 Summary Statistics
+
+```{r}
+#Pick a random sample of 500 data, get the skim of the sample data
+library(skimr)
+set.seed(126)
+diamond$cut <- as.factor(diamond$cut)
+diamond$color <- as.factor(diamond$color)
+diamond$clarity <- as.factor(diamond$clarity)
+diamond <- diamond[sample(nrow(diamond),500),]
+skim(diamond)
+```
+
+## 1.5 Initial MLR Model Fitting
+
+### Backward Stepwise Selection
+
+To build the regression model, we used backward stepwise selection, a method that iteratively removes the least significant variables from the model to find the optimal subset of predictors. The process involved fitting an initial model with all predictors and then removing variables step-by-step based on their significance.
+
+We started with a full model including all predictor variables: carat, cut, color, clarity, depth, table, x, y, and z.
+
+## 1.6 Model Summary and Interpretation
+
+```{r}
+model_total <- lm(price ~ ., data = diamond)
+summary(model_total)
+```
+
+Backward Stepwise Selection We used the step function with the direction set to “backward” to perform the stepwise selection. The AIC (Akaike Information Criterion) was used as the criterion for variable selection.
+
+```{r, results = FALSE}
+step(model_total, direction = "backward")
+```
+
+The backward stepwise selection process identified the following five significant predictors: carat, color, clarity, table, and z, which are two categorical variables and three numerical variables.
+
+```{r}
+model_initial <- lm(formula = price ~ carat + color + clarity + table + z, data = diamond)
+summary(model_initial)
+```
+
+# Part 2: Simple Linear Regression
+
+## 2.1 Initial SLR Model Fitting
+
+```{r, echo = FALSE, results = FALSE}
+summary(lm(formula = price ~ carat, data = diamond))
+summary(lm(formula = price ~ cut, data = diamond))
+summary(lm(formula = price ~ color, data = diamond))
+summary(lm(formula = price ~ clarity, data = diamond))
+summary(lm(formula = price ~ depth, data = diamond))
+summary(lm(formula = price ~ table, data = diamond))
+summary(lm(formula = price ~ x, data = diamond))
+summary(lm(formula = price ~ y, data = diamond))
+summary(lm(formula = price ~ z, data = diamond))
+```
+
+After comparing the adjusted R-squared value of each SLR model, the model with carat as IV have the highest adjusted R-square. Therefore we choose carat as the IV for our SLR model. This initial fitting will help us understand the relationship between the weight of the diamond (carat) and its price.
+
+The initial model was: [ $\log({price}) = \beta_0 + \beta_1log({carat}) + \varepsilon_i$ ] Where:
+
+• ( $\beta_0$ ) is the intercept
+
+• ( $\beta_1$ ) is the coefficient for carat
+
+• ( $\varepsilon_i$ ) is the error term.
+
+### Model Summary and Interpretation
+
+```{r, echo = FALSE}
+sfit <- lm(formula = price ~ carat, data = diamond)
+summary(sfit)
+```
+
+The model summary provides key statistics:
+
+\- **Coefficients**: The coefficient for ‘carat’ is significant with a p-value much less than 0.05, indicating a strong linear relationship between ‘carat’ and ‘price’.
+
+\- $R^2$ **:** The $R^2$ value is 0.8375, suggesting that 83.75% of the variability in the diamond prices can be explained by the carat weight.
+
+\- **Residual Standard Error**: The residual standard error is 1558, indicating the average amount that the observed values deviate from the regression line.
+
+\- **F-statistic**: The F-statistic value is extremely high with a significant p-value, further confirming that the model explains a significant amount of the variance in the response variable.
+
+\- **Confidence Intervals**: The confidence intervals for the coefficients show that the effect of ‘carat’ on ‘price’ is significant and does not include zero.
+
+\- **Diagnostic Plots**: The residual plots suggest a reasonably good fit but show some indication of heteroscedasticity.
+
+### Assumption Testing and Transformations
+
+The initial regression model was subjected to diagnostic checks to evaluate the following assumptions:
+
+1.Linearity: The relationship between the IV and DV should be linear.
+
+2.Independence: The residuals (errors) should be independent.
+
+3.Homoscedasticity: The residuals should have constant variance.
+
+4.Normality: The residuals should be normally distributed.
+
+```{r, echo = FALSE}
+sfit <- lm(formula = price ~ carat, data = diamond)
+plot(diamond$carat, diamond$price, xlab = "carat", ylab = "diamond price")
+abline(sfit, col = "red")
+par(mfrow = c(2, 2))
+plot(sfit)
+```
+
+Adjusted R^2 value:
+
+```{r, echo = FALSE}
+summary(sfit)$adj.r.squared
+```
+
+Initial Findings:
+
+-   **Linearity**: The residuals vs fitted plot is more diverged as the value of carat get large, the position of the dots indicates some non-linearity, suggesting that *a transformation might be necessary.*
+-   **Expected Value of Residuals**: The expected value of the residuals was approximately zero, satisfying the requirement E($\varepsilon_i$) = 0.
+-   **Homoscedasticity**: The plot of residuals versus fitted values indicated a pattern, suggesting *non-constant variance* (heteroscedasticity).
+-   **Independence**: The residuals do not show any apparent pattern, implying that the independence assumption holds.
+-   **Normality**: The residuals were roughly normally distributed, as assessed by a Q-Q plot.
+
+## 2.2 Model Transformation
+
+To address the issue of heteroscedasticity, we applied a logarithmic transformation to price. The transformed model was:
+
+$\log({price}) = \beta_0 + \beta_1{carat} + \varepsilon_i$
+
+This transformation aimed to stabilize the variance of the residuals and improve model fit.
+
+```{r, echo = FALSE}
+diamond_1 <- diamond
+diamond_1$price <- log(diamond_1$price)
+sfit_adj_1 <- lm(formula = price ~ carat, data = diamond_1)
+plot(diamond_1$carat, diamond_1$price, xlab = "carat", ylab = "log(diamond price)")
+abline(sfit_adj_1, col = "red", lwd = 2)
+par(mfrow = c(2, 2))
+plot(sfit_adj_1)
+```
+
+From the plot of log(diamond price) vs carat, we found out that they didn't have a linear relationship. To address the issue, we further applied a logarithmic transformation to carat. The transformed model was:
+
+$\log({price}) = \beta_0 + \beta_1log({carat}) + \varepsilon_i$
+
+This transformation aimed to form a linear relationship between our DV and IV.
+
+```{r, echo = FALSE}
+diamond_2 <- diamond
+diamond_2$price <- log(diamond_2$price)
+diamond_2$carat <- log(diamond_2$carat)
+sfit_adj_2 <- lm(formula = price ~ carat, data = diamond_2)
+plot(diamond_2$carat, diamond_2$price, xlab = "log(carat)", ylab = "log(diamond price)")
+abline(sfit_adj_2, col = "red", lwd = 2)
+par(mfrow = c(2, 2))
+plot(sfit_adj_2)
+```
+
+-   Linearity: The residuals vs fitted plot indicates linearity.
+-   Expected Value of Residuals: The expected value of the residuals was approximately zero, satisfying the requirement E($\varepsilon_i$) = 0.
+-   Homoscedasticity: The scale-location plot reveals no heteroscedasticity, indicating that the variance of the residuals is constant.
+-   Independence: The residuals do not show any apparent pattern, implying that the independence assumption holds.
+-   Normality: The Q-Q plot shows some deviation from normality, especially in the tails.
+
+### Transformed Model
+
+```{r, echo = FALSE}
+summary(sfit_adj_2)
+```
+
+The transformed model’s summary statistics show:
+
+-   Coefficients: The coefficient for ‘log_carat’ remains significant.
+-   $R^2$ : The adjusted $R^2$ increased from 0.8375 in the original model to 0.932 in the model after transformation, indicating improvement in the model fit.
+-   Residual Standard Error: The residual standard error has decreased, suggesting a better fit.
+-   Diagnostic Plots: The diagnostic plots of the transformed model show improved normality and homoscedasticity.
+
+### Transformed Model Diagnostics
+
+```{r, echo = FALSE}
+sum_sfit_adj_2 <- summary(sfit_adj_2)
+sum_sfit_adj_2$coefficients
+confint(sfit_adj_2, level = 0.95) # 95% CI
+```
+The model from this 500 data sample is:
+
+$\log({price}) = 8.439106 + 1.665252log({carat}) + \varepsilon_i$
+
+After the logarithmic transformation, the model diagnostics were revisited:
+
+• Expected Value of Residuals: The expected value of the residuals remained approximately zero.
+
+• Normality: The residuals were normally distributed as indicated by the Q-Q plot.
+
+• Homoscedasticity: The residual plot showed no apparent pattern, suggesting that the issue of heteroscedasticity was resolved.
+
+**Confidence Intervals**:
+
+The 95% confidence intervals for the model coefficients are as follows:
+
+• Intercept: [8.411602, 8.466609]
+
+• $\log(\text{carat})$: [1.625694, 1.704809]
+
+```{r, echo = FALSE}
+y <- diamond_2$price
+x <- diamond_2$carat
+b0 = summary(sfit_adj_2)$coef[1,1] # Intercept
+b1 = summary(sfit_adj_2)$coef[2,1] # Slope
+y_hat = b0 + b1*x # Fitted values
+p1 = predict(sfit_adj_2, diamond_2, se.fit = TRUE, interval = "confidence", level = 0.95)
+p2 = predict(sfit_adj_2, diamond_2, se.fit = TRUE, interval = "prediction", level = 0.95)
+conf_pred_tib = data.frame(x, y, y_hat,
+UL_c = p1$fit[,3], LL_c = p1$fit[,2],
+UL_p = p2$fit[,3], LL_p = p2$fit[,2])
+library(ggplot2)
+ggplot(data = conf_pred_tib) +
+geom_point(aes(x = x, y = y), color = "black", alpha = 0.8, size = 1) +
+geom_line(aes(x = x, y = y_hat), color = "blue") + 
+geom_line(aes(x = x, y = UL_c, color = "Mean CI"), linetype = "twodash") +
+geom_line(aes(x = x, y = LL_c, color = "Mean CI"), linetype = "twodash")+
+geom_line(aes(x = x, y = UL_p, color = "Prediction CI"), linetype = "dashed") +
+geom_line(aes(x = x, y = LL_p, color = "Prediction CI"), linetype = "dashed") +
+labs(x = "log(carat)",
+y = "log(diamond price)",
+title = "95% Confidence bands")
+```
+
+The transformed regression model, with both price and carat logged, satisfied all the key assumptions of linear regression, making it a robust model for predicting price based on carat. The final model can be represented as: $\log(\text{price})$ = $\beta_0$ + $\beta_1$ $\cdot$ $\log(\text{carat})$ + $\epsilon$
+
+## 2.3 Initial MLR Model Fitting
+
+Started from the simple linear model obtained above, we incrementally added four remaining variables into it, and compare the R-square of each models to identify the best-performing model:
+
+```{r}
+mfit_adj <- lm(formula = price ~ carat, data = diamond_2)
+summary(mfit_adj)$adj.r.squared
+mfit_adj_1 <- lm(formula = price ~ carat + color, data = diamond_2)
+summary(mfit_adj_1)$adj.r.squared
+mfit_adj_2 <- lm(formula = price ~ carat + color + clarity, data = diamond_2)
+summary(mfit_adj_2)$adj.r.squared
+mfit_adj_3 <- lm(formula = price ~ carat + color + clarity + table, data = diamond_2)
+summary(mfit_adj_3)$adj.r.squared
+mfit_adj_4 <- lm(formula = price ~ carat + color + clarity + table + z, data = diamond_2)
+summary(mfit_adj_4)$adj.r.squared
+```
+
+After evaluating each model, we observed that the addition of ‘z’ to the model resulted in a very slight decrease in the adjusted R\^2 by 0.0001. This small marginal change suggests that ‘z’ does not significantly affect the model’s explanatory power, and such a decrement further confirms our claims to remove 'z' .
+
+Therefore, 'z' was excluded from the final multiple linear regression model. Assessing the adjusted R\^2 values at each step ensured a robust model. Given the negligible contribution of 'z', it was excluded, ensuring that the final model remains both parsimonious and effective in predicting 'price' using the selected variables: 'carat', 'color', 'clarity', and 'table'.
+
+## 2.4 Multicollinearity Assessing
+
+```{r, echo = FALSE}
+library(carData)
+library(car)
+four_variable_fit <- lm(formula = price ~ carat + color + clarity + table, data = diamond_2)
+vif(four_variable_fit)
+```
+
+The results show that all predictor variables (‘carat’, ‘color’, ‘clarity’, and ‘table’) have adjusted GVIF values significantly below the threshold of 10. This indicates that there is low multicollinearity among the predictor variables in the model. Therefore, we can conclude that multicollinearity is not a concern in this multiple linear regression model, and the coefficients can be interpreted with confidence.
+
+# Part 3: MLR Observation
+
+## 3.1 Diagnostic Plots & Coefficients and Confidence Intervals
+
+```{r, echo = FALSE}
+mfit <- lm(formula = price ~ carat + color + clarity + table, data = diamond_2)
+par(mfrow = c(2, 2))
+plot(mfit)
+summary(mfit)
+```
+
+Diamond_2 here is the copy of the original 500 data sample that tranformed the price to log(price) and carat to log(carat).
+
+The multiple linear regression model effectively uses ‘carat’, ‘color’, ‘clarity’, and ‘table’ to explain the variance in diamond ‘price’. The diagnostic plots suggest that the assumptions of linear regression are reasonably met, although slight deviations and potential influential points should be considered. The coefficients and their confidence intervals indicate the significant impact of these predictors on diamond price, with ‘carat’ being the most influential factor, followed by ‘clarity’ and ‘color’. The ‘table’ variable has a minor negative effect on price.
+
+## 3.2 Confirm Best Model
+
+The stepwise regression analysis confirms that the best model for predicting diamond price includes all the initial predictors: ‘carat’, ‘color’, ‘clarity’, and ‘table’. None of these predictors should be removed, as their exclusion increases the AIC, indicating a worse model fit.
+
+```{r, echo = FALSE}
+step(mfit, direction = "backward")
+```
+
+This model ensures that the predictors included provide the best explanatory power for the price of diamonds, as indicated by the lowest AIC value.
+
+### Cross Validation for SLR and MLR
+
+In order to evaluate the performance of each model on unseen data, the diamond dataset is divided into training and testing subsets. In other words, models will be trained on the training data and resultant models are applied to the testing sets. We use a random sample that include 80% of the whole data as the training set and the rest of the data is the testing set. During the test stage, the value of dependent variable is predicted, and the model accuracy is calculated on the basis of prediction error:
+
+-   R-square
+
+-   Root Mean Squared Error(RMSE)
+
+-   Mean Absolute Error(MAE)
+
+```{r}
+
+#loading data
+library(caret)
+library(lattice)
+set.seed(126)
+
+#generating the training and testing data sets
+diamond_test <- read.csv("Diamonds Prices2022.csv")
+diamond_test$cut <- as.factor(diamond_test$cut)
+diamond_test$color <- as.factor(diamond_test$color)
+diamond_test$clarity <- as.factor(diamond_test$clarity)
+diamond_test$price <- log(diamond_test$price)
+diamond_test$carat <- log(diamond_test$carat)
+diamond_test <- diamond_test[,-1]
+random_sample <- sample(nrow(diamond_test), nrow(diamond_test) * 0.8)
+training_dataset  <- diamond_test[random_sample, ]
+testing_dataset <- diamond_test[-random_sample, ]
+
+#simple linear regression model
+slr_model <- lm(formula = price ~ carat, data = training_dataset)
+slr_predictions <- predict(slr_model, testing_dataset)
+#computing the performance metrics
+data.frame( R2 = R2(slr_predictions, testing_dataset$price),
+            RMSE = RMSE(slr_predictions, testing_dataset$price),
+            MAE = MAE(slr_predictions, testing_dataset$price))
+
+#multiple linear regression model
+mlr_model <- lm(formula = price ~ carat + color + clarity + table, data = training_dataset)
+mlr_predictions <- predict(mlr_model, testing_dataset)
+data.frame( R2 = R2(mlr_predictions, testing_dataset$price),
+            RMSE = RMSE(mlr_predictions, testing_dataset$price),
+            MAE = MAE(mlr_predictions, testing_dataset$price))
+```
+
+The comparison between the simple linear regression model and the multiple linear regression model shows that the MLR model performs significantly better. The MLR model, which includes ‘carat’, ‘color’, ‘clarity’, and ‘table’ as predictors, has a much higher R-square value(0.9818737) and lower RMSE(0.1378395) and MAE(0.1069274) values, indicating that it provides a much more accurate and reliable prediction of diamond prices.
+
+This analysis confirms that adding additional variables (‘color’, ‘clarity’, and ‘table’) improves the explanatory power of the model significantly, compared to using ‘carat’ alone. Therefore, the multiple linear regression model should be preferred for predicting diamond prices.
+
+### Decide on the Final Model
+
+The stepwise regression analysis confirms that the best model for predicting diamond price includes all the initial predictors: ‘carat’, ‘color’, ‘clarity’, and ‘table’, that is:
+
+  **Best Model**: `log(price) ~ log(carat) + color + clarity + table`
+
+None of these predictors should be removed, as their exclusion increases the AIC, indicating a worse model fit.
+
+```{r, echo = FALSE}
+step(mfit, direction = "backward")
+```
+Diamond_2 here is the copy of the original 500 data sample that tranformed the price to log(price) and carat to log(carat).
+
+This model ensures that the predictors included provide the best explanatory power for the price of diamonds, as indicated by the lowest AIC value.
+
+## 3.3 CI and PI for one combination of the IV
+
+Here is the CI and PI for a diamond that has a size of 1 carat, a color level of I, clarity level of VS2, and a table of 60 mm.
+
+```{r}
+x_combination <- data.frame(carat = 1, color = "I", clarity = "VS2", table = 60)
+x_combination$carat <- log(x_combination$carat)
+x_combination$table <- log(x_combination$table)
+p3 = predict(mfit, x_combination, se.fit = TRUE, interval = "confidence", level = 0.95)
+p4 = predict(mfit, x_combination, se.fit = TRUE, interval = "prediction", level = 0.95)
+p3$fit
+p4$fit
+```
+
+The 95% confidence intervals for the log of the price of the diamond that has a size of 1 carat, a color level of I, clarity level of VS2, and a table of 60 mm is [8.43496, 9.05304]
+
+The 95% prediction intervals for the log of the price of the diamond that has a size of 1 carat, a color level of I, clarity level of VS2, and a table of 60 mm is [8.333381, 9.15462]
+
+## 3.4 Observations
+
+Comment on interesting findings during this part:
+
+1.  The initial simple linear regression showed a strong relationship between ‘carat’ and ‘price’. However, diagnostic plots indicated the violations of model assumptions and the need for transformation.
+2.  Log transformations of ‘price’ and ‘carat’ improved the model fit and addressed the issues of heteroscedasticity and normality of residuals.
+3.  Including additional categorical variables like ‘color’ and ‘clarity’ further improved the model, significantly increasing the $R^2$ value and providing a more comprehensive understanding of the factors affecting diamond prices.
+4.  The analysis revealed the importance of multiple factors in determining diamond prices, with ‘carat’ being the most influential predictor, followed by ‘color’, ‘clarity’ and 'table'.
+
+## 3.5 Summary
+
+### Model Building and Evaluation
+
+$\log({price}) = \beta_0 + \beta_1log({carat}) + \varepsilon_i$
+
+```         
+1. **Simple Linear Regression (SLR)**:
+•   Model: log(price) ~ log(carat)
+•   Performance:
+   $R^2$ : 0.9329815
+   RMSE: 0.2650388
+   MAE: 0.2062229
+•   Findings: The SLR model showed a strong relationship between carat and price, explaining 93.3% of the variance in diamond prices. However, diagnostic plots indicated the need for further improvements and transformations.
+```
+
+$\log({price}) = \beta_0 + \beta_1log({carat}) + \beta_2I_{color = E} + \beta_3I_{color = I} + \beta_4I_{color = J} + \beta_5I_{color = H} + \beta_6I_{color = F} + \beta_7I_{color = G} + \beta_8I_{color = D} + \beta_9I_{clarity = I1} + \beta_{10}I_{clarity = VS2} + \beta_{11}I_{clarity = SI1} + \beta_{12}I_{clarity = VVS1} + \beta_{13}I_{clarity = VVS2} + \beta_{14}I_{clarity = VS1} + \beta_{15}I_{clarity = SI2} + \beta_{16}I_{clarity = IF} + \beta_{16}{table} + \varepsilon_i$
+
+```         
+2. **Multiple Linear Regression (MLR)**:
+•   Model: log(price) ~ log(carat) + color + clarity + table
+•   Performance:
+  $R^2$ : 0.9818737
+  RMSE: 0.1378395
+  MAE: 0.1069274
+•   Findings: The MLR model significantly improved performance, explaining 98.2% of the variance in diamond prices. The inclusion of color and clarity variables provided a more comprehensive understanding of the factors affecting prices. Diagnostic plots confirmed that the model assumptions were reasonably met.
+```
+
+**Stepwise Regression and Model Selection**
+
+Stepwise regression using AIC confirmed that the best model includes ‘carat’, ‘color’, ‘clarity’, and ‘table’. Removing any of these predictors increased the AIC, indicating a worse model fit.
+
+**Key Observations**
+
+```         
+1.  Impact of Carat: Carat weight remains the most influential predictor of diamond prices.
+2.  Role of Color and Clarity: Lower color grades decrease prices, while higher clarity grades increase prices.
+3.  Minor Role of Table: Table percentage has a minor but significant negative impact on price.
+4.  Model Robustness: Diagnostic checks confirmed that the MLR model is robust and reliable.
+```
+
+### Conclusion
+
+The comprehensive analysis revealed the multifaceted nature of diamond pricing, with carat, color, and clarity being the most critical factors. The final MLR model, including ‘carat’, ‘color’, ‘clarity’, and ‘table’, provides an excellent fit to the data, making it a reliable tool for predicting diamond prices. This model can be effectively used for accurate price predictions and offers valuable insights for the diamond industry.
